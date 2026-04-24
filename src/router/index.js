@@ -1,11 +1,11 @@
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHashHistory } from "vue-router";
 
 import CategoriesPage from "../pages/CategoriesPage.vue";
 import HomePage from "../pages/HomePage.vue";
 import ProductsPage from "../pages/ProductsPage.vue";
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: "/",
