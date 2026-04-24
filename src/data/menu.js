@@ -3,7 +3,7 @@ export const venue = {
   slogan: "Bir Yudum Huzur",
   note: "Zarif sunumlar, sakin bir atmosfer ve gunun ritmine eslik eden tatlar.",
   hours: "08:30 - 23:00",
-  logo: `${import.meta.env.BASE_URL}brand/mehlika-logo.jpg`,
+  logo: `${import.meta.env.BASE_URL}brand/logo.jpg`,
   links: [
     {
       label: "Instagram",
