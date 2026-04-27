@@ -20,5 +20,7 @@
 <script setup>
 import CategoryCard from "../components/CategoryCard.vue";
 import PageHeading from "../components/PageHeading.vue";
-import { categories } from "../data/menu";
+import { usePublicMenu } from "../composables/usePublicMenu";
+
+const { categories } = usePublicMenu();
 </script>

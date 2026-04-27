@@ -1,7 +1,10 @@
 <template>
   <article class="product-card">
     <div class="product-media">
-      <img :src="product.image" :alt="product.name" />
+      <img v-if="product.image" :src="product.image" :alt="product.name" />
+      <div v-else class="product-placeholder">
+        <span>{{ product.name }}</span>
+      </div>
       <span class="price-badge">{{ product.price }}</span>
     </div>
 

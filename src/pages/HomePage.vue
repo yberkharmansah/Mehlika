@@ -8,5 +8,7 @@
 <script setup>
 import HeroSection from "../components/HeroSection.vue";
 import VenueLinksPanel from "../components/VenueLinksPanel.vue";
-import { venue } from "../data/menu";
+import { usePublicMenu } from "../composables/usePublicMenu";
+
+const { venue } = usePublicMenu();
 </script>

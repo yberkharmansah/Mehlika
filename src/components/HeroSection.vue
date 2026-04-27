@@ -9,7 +9,7 @@
 
     <div class="cta-row">
       <RouterLink class="button" to="/kategoriler">Menuyu Kesfet</RouterLink>
-      <RouterLink class="ghost-button" to="/urunler">One Cikanlar</RouterLink>
+      <RouterLink class="ghost-button" to="/urunler/featured">One Cikanlar</RouterLink>
     </div>
   </section>
 </template>

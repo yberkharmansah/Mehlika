@@ -1,5 +1,5 @@
 <template>
-  <AppLayout>
+  <component :is="activeLayout">
     <div class="route-stage">
       <Transition name="page-fade" mode="out-in">
         <RouterView :key="route.fullPath" />
@@ -15,33 +15,40 @@
         </div>
       </div>
     </Transition>
-  </AppLayout>
+  </component>
 </template>
 
 <script setup>
-import { onBeforeUnmount, ref } from "vue";
+import { computed, onBeforeUnmount, ref } from "vue";
 import { RouterView, useRoute, useRouter } from "vue-router";
 
-import AppLayout from "./layouts/AppLayout.vue";
+import AdminLayout from "./layouts/AdminLayout.vue";
+import AuthLayout from "./layouts/AuthLayout.vue";
+import PublicLayout from "./layouts/PublicLayout.vue";
+
+const layouts = {
+  public: PublicLayout,
+  admin: AdminLayout,
+  auth: AuthLayout,
+};
 
 const route = useRoute();
 const router = useRouter();
 const showBirdTransition = ref(false);
+const activeLayout = computed(() => layouts[route.meta.layout] || PublicLayout);
 let hideTimer = null;
 
 const removeGuard = router.beforeEach((to, from) => {
   const isMenuTransition =
-    from.path === "/" && (to.path.startsWith("/kategoriler") || to.path.startsWith("/urunler"));
+    from.path === "/" &&
+    to.meta.layout === "public" &&
+    (to.path.startsWith("/kategoriler") || to.path.startsWith("/urunler"));
 
-  if (!isMenuTransition) {
-    return true;
-  }
+  if (!isMenuTransition) return true;
 
   showBirdTransition.value = true;
 
-  if (hideTimer) {
-    clearTimeout(hideTimer);
-  }
+  if (hideTimer) clearTimeout(hideTimer);
 
   hideTimer = setTimeout(() => {
     showBirdTransition.value = false;
@@ -53,9 +60,6 @@ const removeGuard = router.beforeEach((to, from) => {
 
 onBeforeUnmount(() => {
   removeGuard();
-
-  if (hideTimer) {
-    clearTimeout(hideTimer);
-  }
+  if (hideTimer) clearTimeout(hideTimer);
 });
 </script>
