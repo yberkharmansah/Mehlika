@@ -1,6 +1,7 @@
 import { computed, ref } from "vue";
 
 import { categories as fallbackCategories, products as fallbackProducts } from "../data/menu";
+import { venue } from "../data/menu";
 import {
   createCategory,
   createProduct,
@@ -8,6 +9,7 @@ import {
   deleteProduct,
   fetchCategories,
   fetchProducts,
+  publishMenuSnapshot,
   replaceMenuCatalog,
   replaceCategoryOrder,
   replaceProductOrder,
@@ -69,6 +71,24 @@ export function useAdminMenu() {
     lastError.value = "";
   }
 
+  async function publishCurrentMenu() {
+    saving.value = true;
+    clearError();
+    try {
+      await publishMenuSnapshot({
+        venue,
+        categories: categories.value,
+        products: products.value,
+      });
+      return true;
+    } catch (error) {
+      setLastError(error);
+      return false;
+    } finally {
+      saving.value = false;
+    }
+  }
+
   async function load() {
     if (loaded.value) return;
 
@@ -105,6 +125,7 @@ export function useAdminMenu() {
       });
       loaded.value = false;
       await load();
+      await publishCurrentMenu();
       return true;
     } catch (error) {
       setLastError(error);
@@ -120,6 +141,7 @@ export function useAdminMenu() {
     try {
       const target = categories.value.find((item) => item.id === id || item.docId === id);
       await updateCategory(target?.docId ?? id, payload);
+      await publishCurrentMenu();
       return true;
     } catch (error) {
       setLastError(error);
@@ -136,6 +158,7 @@ export function useAdminMenu() {
       const target = categories.value.find((item) => item.id === id || item.docId === id);
       await deleteCategory(target?.docId ?? id);
       categories.value = categories.value.filter((item) => item.id !== id);
+      await publishCurrentMenu();
       return true;
     } catch (error) {
       setLastError(error);
@@ -155,6 +178,7 @@ export function useAdminMenu() {
       });
       loaded.value = false;
       await load();
+      await publishCurrentMenu();
       return true;
     } catch (error) {
       setLastError(error);
@@ -169,6 +193,7 @@ export function useAdminMenu() {
     clearError();
     try {
       await updateProduct(id, payload);
+      await publishCurrentMenu();
       return true;
     } catch (error) {
       setLastError(error);
@@ -184,6 +209,7 @@ export function useAdminMenu() {
     try {
       await deleteProduct(id);
       products.value = products.value.filter((item) => item.id !== id);
+      await publishCurrentMenu();
       return true;
     } catch (error) {
       setLastError(error);
@@ -204,6 +230,7 @@ export function useAdminMenu() {
     categories.value = normalizeCategories(next);
     try {
       await replaceCategoryOrder(categories.value);
+      await publishCurrentMenu();
     } catch (error) {
       setLastError(error);
     }
@@ -220,6 +247,7 @@ export function useAdminMenu() {
     products.value = normalizeProducts(next);
     try {
       await replaceProductOrder(products.value);
+      await publishCurrentMenu();
     } catch (error) {
       setLastError(error);
     }
@@ -281,5 +309,6 @@ export function useAdminMenu() {
     uploadImage,
     tryDeleteUploadedImage,
     replaceCatalog,
+    publishCurrentMenu,
   };
 }

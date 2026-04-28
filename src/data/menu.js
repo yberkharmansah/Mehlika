@@ -1,4 +1,6 @@
 export const venue = {
+  id: "mehlika",
+  slug: "mehlika",
   name: "Mehlika",
   slogan: "Bir Yudum Huzur",
   note: "Zarif sunumlar, sakin bir atmosfer ve gunun ritmine eslik eden tatlar.",

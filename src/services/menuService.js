@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   orderBy,
   query,
@@ -12,11 +13,13 @@ import {
 } from "firebase/firestore";
 
 import { db, isFirebaseConfigured } from "../lib/firebase";
+import { venue as defaultVenue } from "../data/menu";
 import { deleteImageByToken, uploadImageToCloudinary } from "./mediaService";
 
 const COLLECTIONS = {
   categories: "categories",
   products: "products",
+  publishedMenus: "publishedMenus",
 };
 
 function ensureFirebase() {
@@ -54,6 +57,76 @@ function toCategorySlug(name = "") {
     .replace(/^-+|-+$/g, "");
 }
 
+function sortByOrder(items = [], field = "sortOrder") {
+  return [...items].sort((left, right) => Number(left[field] ?? 9999) - Number(right[field] ?? 9999));
+}
+
+function buildPublishedMenuPayload({
+  venue = defaultVenue,
+  categories = [],
+  products = [],
+}) {
+  const activeCategories = sortByOrder(
+    categories.filter((item) => item.isActive !== false),
+    "sortOrder"
+  );
+  const activeProducts = sortByOrder(
+    products.filter((item) => item.isActive !== false),
+    "sortOrder"
+  );
+
+  return {
+    restaurantId: venue.id,
+    restaurantName: venue.name,
+    slug: venue.slug,
+    venue: {
+      id: venue.id,
+      slug: venue.slug,
+      name: venue.name,
+      slogan: venue.slogan,
+      note: venue.note,
+      hours: venue.hours,
+      logo: venue.logo,
+      links: venue.links,
+    },
+    categories: activeCategories.map((category) => {
+      const categoryProducts = activeProducts
+        .filter((product) => product.category === category.id)
+        .map((product) => ({
+          id: product.id,
+          name: product.name,
+          description: product.description ?? "",
+          price: product.price,
+          currency: "TRY",
+          imageUrl: product.image ?? "",
+          image: product.image ?? "",
+          tags: Array.isArray(product.tags) ? product.tags : [],
+          isActive: product.isActive !== false,
+          isFeatured: product.isFeatured === true,
+          featuredOrder: Number(product.featuredOrder ?? 0),
+          order: Number(product.sortOrder ?? 0),
+          sortOrder: Number(product.sortOrder ?? 0),
+          category: product.category,
+        }));
+
+      return {
+        id: category.id,
+        slug: category.id,
+        name: category.name,
+        accent: category.accent ?? "",
+        description: category.description ?? "",
+        image: category.image ?? "",
+        imageUrl: category.image ?? "",
+        itemCount: categoryProducts.length,
+        isActive: category.isActive !== false,
+        order: Number(category.sortOrder ?? 0),
+        sortOrder: Number(category.sortOrder ?? 0),
+        products: categoryProducts,
+      };
+    }),
+  };
+}
+
 export async function fetchCategories() {
   ensureFirebase();
   const snapshot = await getDocs(
@@ -75,6 +148,16 @@ export async function fetchProducts() {
     query(collection(db, COLLECTIONS.products), orderBy("sortOrder", "asc"))
   );
   return snapshot.docs.map((entry) => ({ ...entry.data(), id: entry.id }));
+}
+
+export async function fetchPublishedMenu(restaurantId = defaultVenue.id) {
+  ensureFirebase();
+  const snapshot = await getDoc(doc(db, COLLECTIONS.publishedMenus, restaurantId));
+  if (!snapshot.exists()) return null;
+  return {
+    id: snapshot.id,
+    ...snapshot.data(),
+  };
 }
 
 export async function createCategory(payload) {
@@ -180,6 +263,12 @@ export async function replaceMenuCatalog({ categories = [], products = [] }) {
       )
     )
   );
+
+  await publishMenuSnapshot({
+    venue: defaultVenue,
+    categories,
+    products,
+  });
 }
 
 export async function replaceCategoryOrder(categories) {
@@ -210,6 +299,21 @@ export async function replaceProductOrder(products) {
       )
     )
   );
+}
+
+export async function publishMenuSnapshot({
+  venue = defaultVenue,
+  categories = [],
+  products = [],
+} = {}) {
+  ensureFirebase();
+  const publishedPayload = buildPublishedMenuPayload({ venue, categories, products });
+  await setDoc(
+    doc(db, COLLECTIONS.publishedMenus, venue.id ?? defaultVenue.id),
+    withTimestamps(publishedPayload, true),
+    { merge: true }
+  );
+  return publishedPayload;
 }
 
 export async function uploadMenuImage(file, folder = "menu") {

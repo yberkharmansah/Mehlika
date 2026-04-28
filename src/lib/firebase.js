@@ -6,7 +6,6 @@ import {
   setPersistence,
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -22,14 +21,12 @@ export const isFirebaseConfigured = Object.values(firebaseConfig).every(Boolean)
 let app;
 let auth;
 let db;
-let storage;
 let authReadyPromise = Promise.resolve(null);
 
 if (isFirebaseConfigured) {
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
-  storage = getStorage(app);
 
   authReadyPromise = setPersistence(auth, browserLocalPersistence).then(
     () =>
@@ -42,4 +39,4 @@ if (isFirebaseConfigured) {
   );
 }
 
-export { app, auth, db, storage, authReadyPromise };
+export { app, auth, db, authReadyPromise };

@@ -924,6 +924,28 @@ button {
   gap: 12px;
 }
 
+.category-jump-panel {
+  padding: 18px 20px;
+  border-radius: 18px;
+  border: 1px solid rgba(208, 197, 175, 0.28);
+  background:
+    radial-gradient(circle at top right, rgba(212, 175, 55, 0.12), transparent 34%),
+    rgba(255, 255, 255, 0.7);
+  box-shadow: var(--shadow);
+}
+
+.filters-soft {
+  padding-bottom: 6px;
+}
+
+.filter-button {
+  cursor: pointer;
+}
+
+.category-stage {
+  scroll-margin-top: 108px;
+}
+
 .filters-heading {
   display: flex;
   align-items: center;
