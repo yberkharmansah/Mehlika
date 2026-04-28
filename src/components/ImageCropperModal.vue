@@ -185,6 +185,7 @@ function confirmCrop() {
   const canvas = cropper.value.getCroppedCanvas({
     imageSmoothingEnabled: true,
     imageSmoothingQuality: "high",
+    fillColor: "#fbf6eb",
   });
 
   canvas.toBlob(

@@ -13,7 +13,6 @@ const products = ref([...fallbackProducts]);
 const venue = ref({ ...fallbackVenue });
 const loading = ref(false);
 let loaded = false;
-const PUBLIC_MENU_CACHE_KEY = "mehlika-public-menu-v1";
 
 function normalizePublishedMenu(menu) {
   const publishedVenue = menu?.venue ?? fallbackVenue;
@@ -59,37 +58,9 @@ function normalizePublishedMenu(menu) {
   };
 }
 
-function readCachedMenu() {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.sessionStorage.getItem(PUBLIC_MENU_CACHE_KEY);
-    if (!raw) return null;
-    return normalizePublishedMenu(JSON.parse(raw));
-  } catch {
-    return null;
-  }
-}
-
-function writeCachedMenu(payload) {
-  if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.setItem(PUBLIC_MENU_CACHE_KEY, JSON.stringify(payload));
-  } catch {
-    // cache best effort only
-  }
-}
-
-const cachedMenu = readCachedMenu();
-if (cachedMenu) {
-  venue.value = cachedMenu.venue;
-  categories.value = cachedMenu.categories;
-  products.value = cachedMenu.products;
-  loaded = true;
-}
-
 export function usePublicMenu() {
-  async function loadMenu() {
-    if (loaded || !isFirebaseConfigured) return;
+  async function loadMenu({ force = false } = {}) {
+    if ((loaded && !force) || !isFirebaseConfigured) return;
 
     loading.value = true;
     try {
@@ -100,7 +71,6 @@ export function usePublicMenu() {
         venue.value = normalizedMenu.venue;
         categories.value = normalizedMenu.categories;
         products.value = normalizedMenu.products;
-        writeCachedMenu(publishedMenu);
       }
 
       loaded = true;
