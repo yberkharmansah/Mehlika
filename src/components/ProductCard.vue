@@ -1,7 +1,15 @@
 <template>
   <article class="product-card">
     <div class="product-media">
-      <img v-if="product.image" :src="product.image" :alt="product.name" />
+      <img
+        v-if="product.image"
+        :src="imageAttrs.src"
+        :srcset="imageAttrs.srcset"
+        :sizes="imageAttrs.sizes"
+        :alt="product.name"
+        loading="lazy"
+        decoding="async"
+      />
       <div v-else class="product-placeholder">
         <span>{{ product.name }}</span>
       </div>
@@ -24,10 +32,22 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from "vue";
+import { getResponsiveImageAttrs } from "../services/cloudinaryService";
+
+const props = defineProps({
   product: {
     type: Object,
     required: true,
   },
 });
+
+const imageAttrs = computed(() =>
+  getResponsiveImageAttrs(props.product.image, {
+    width: 960,
+    height: 600,
+    fit: "fill",
+    sizes: "(max-width: 720px) 100vw, (max-width: 1200px) 50vw, 33vw",
+  })
+);
 </script>

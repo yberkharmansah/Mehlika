@@ -1,23 +1,23 @@
-<template>
+﻿<template>
   <Teleport to="body">
     <div v-if="open" class="cropper-overlay">
       <div class="cropper-dialog">
         <div class="cropper-header">
           <div>
-            <p class="admin-kicker">Gorsel Duzenleme</p>
+            <p class="admin-kicker">Görsel Düzenleme</p>
             <h3>{{ title }}</h3>
           </div>
-          <button class="admin-icon-button" type="button" @click="$emit('close')">Kapat</button>
+          <button class="admin-icon-button" type="button" :disabled="busy" @click="$emit('close')">Kapat</button>
         </div>
 
         <div class="cropper-stage">
-          <img ref="imageRef" :src="src" alt="Kirpma onizleme" class="cropper-image" />
+          <img ref="imageRef" :src="src" alt="Kırpma önizleme" class="cropper-image" />
         </div>
 
         <div class="cropper-toolbar cropper-toolbar-extended">
           <div class="cropper-zoom-panel">
             <div class="cropper-zoom-head">
-              <span>Yakinlastirma</span>
+              <span>Yakınlaştırma</span>
               <strong>%{{ zoomPercent }}</strong>
             </div>
 
@@ -32,16 +32,16 @@
             />
 
             <div class="cropper-zoom-actions">
-              <button class="admin-ghost-button" type="button" @click="stepZoom(-12)">Uzaklas</button>
-              <button class="admin-ghost-button" type="button" @click="fitImage">Sigdir</button>
-              <button class="admin-ghost-button" type="button" @click="stepZoom(12)">Yakinlas</button>
+              <button class="admin-ghost-button" type="button" @click="stepZoom(-12)">Uzaklaş</button>
+              <button class="admin-ghost-button" type="button" @click="fitImage">Sığdır</button>
+              <button class="admin-ghost-button" type="button" @click="stepZoom(12)">Yakınlaş</button>
             </div>
           </div>
 
           <div class="cropper-actions">
-            <button class="admin-ghost-button" type="button" @click="resetCropper">Sifirla</button>
-            <button class="admin-primary-button" type="button" :disabled="submitting" @click="confirmCrop">
-              {{ submitting ? "Hazirlaniyor..." : "Kirp ve Yukle" }}
+            <button class="admin-ghost-button" type="button" :disabled="busy" @click="resetCropper">Sıfırla</button>
+            <button class="admin-primary-button" type="button" :disabled="submitting || busy" @click="confirmCrop">
+              {{ submitting || busy ? "Yükleniyor..." : "Kırp ve Yükle" }}
             </button>
           </div>
         </div>
@@ -69,11 +69,15 @@ const props = defineProps({
   },
   title: {
     type: String,
-    default: "Gorseli duzenle",
+    default: "Görseli düzenle",
   },
   aspectRatio: {
     type: Number,
     default: 1.6,
+  },
+  busy: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -179,10 +183,12 @@ function resetCropper() {
 }
 
 function confirmCrop() {
-  if (!cropper.value) return;
+  if (!cropper.value || submitting.value || props.busy) return;
   submitting.value = true;
 
   const canvas = cropper.value.getCroppedCanvas({
+    maxWidth: 1600,
+    maxHeight: Math.round(1600 / Number(props.aspectRatio || 1.6)),
     imageSmoothingEnabled: true,
     imageSmoothingQuality: "high",
     fillColor: "#fbf6eb",
@@ -201,12 +207,20 @@ function confirmCrop() {
       });
 
       emit("confirm", file);
-      submitting.value = false;
     },
     "image/jpeg",
-    0.92
+    0.82
   );
 }
+
+watch(
+  () => props.busy,
+  (value) => {
+    if (!value) {
+      submitting.value = false;
+    }
+  }
+);
 
 watch(
   () => [props.open, props.src, props.aspectRatio],

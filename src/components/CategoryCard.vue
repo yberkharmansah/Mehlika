@@ -5,7 +5,15 @@
     :to="`/urunler/${category.id}`"
   >
     <div class="category-media">
-      <img v-if="category.image" :src="category.image" :alt="category.name" />
+      <img
+        v-if="category.image"
+        :src="imageAttrs.src"
+        :srcset="imageAttrs.srcset"
+        :sizes="imageAttrs.sizes"
+        :alt="category.name"
+        loading="lazy"
+        decoding="async"
+      />
       <div v-else class="category-placeholder">
         <span>{{ category.name }}</span>
       </div>
@@ -18,16 +26,18 @@
         <p>{{ category.description }}</p>
       </div>
 
-      <div class="category-meta">{{ category.itemCount || 0 }} urun</div>
-      <span class="category-button">MENUYU GOR</span>
+      <div class="category-meta">{{ category.itemCount || 0 }} ürün</div>
+      <span class="category-button">MENÜYÜ GÖR</span>
     </div>
   </RouterLink>
 </template>
 
 <script setup>
 import { RouterLink } from "vue-router";
+import { computed } from "vue";
+import { getResponsiveImageAttrs } from "../services/cloudinaryService";
 
-defineProps({
+const props = defineProps({
   category: {
     type: Object,
     required: true,
@@ -37,4 +47,13 @@ defineProps({
     default: false,
   },
 });
+
+const imageAttrs = computed(() =>
+  getResponsiveImageAttrs(props.category.image, {
+    width: 960,
+    height: 600,
+    fit: "fill",
+    sizes: "(max-width: 720px) 100vw, 50vw",
+  })
+);
 </script>

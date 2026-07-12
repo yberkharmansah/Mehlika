@@ -1,4 +1,4 @@
-import { computed, ref } from "vue";
+﻿import { computed, ref } from "vue";
 
 import { categories as fallbackCategories, products as fallbackProducts } from "../data/menu";
 import { venue } from "../data/menu";
@@ -29,15 +29,15 @@ const lastError = ref("");
 function formatAdminError(error) {
   const code = error?.code ?? "";
 
-  if (code === "permission-denied") {
-    return "Firebase yazma izni reddedildi. Admin hesabi ile giris yaptigindan ve e-posta dogrulamanin tamamlandigindan emin ol.";
+  if (code === "permişsion-denied") {
+    return "Firebase yazma izni reddedildi. Admin hesabı ile giriş yaptığından ve e-posta doğrulamanın tamamlandığından emin ol.";
   }
 
   if (code === "unauthenticated") {
-    return "Bu islem icin yeniden admin girisi yapman gerekiyor.";
+    return "Bu işlem için yeniden admin girişi yapman gerekiyor.";
   }
 
-  return error?.message ?? "Beklenmeyen bir hata olustu.";
+  return error?.message ?? "Beklenmeyen bir hata oluştu.";
 }
 
 function setLastError(error) {
@@ -270,7 +270,7 @@ export function useAdminMenu() {
     try {
       await deleteUploadedMenuImage(deleteToken);
     } catch (error) {
-      console.warn("Cloudinary dosyasi silinemedi veya token suresi doldu.", error);
+      console.warn("Cloudinary dosyası silinemedi veya token süresi doldu.", error);
     }
   }
 
@@ -281,6 +281,100 @@ export function useAdminMenu() {
       await replaceMenuCatalog(payload);
       loaded.value = false;
       await load();
+      return true;
+    } catch (error) {
+      setLastError(error);
+      return false;
+    } finally {
+      saving.value = false;
+    }
+  }
+
+  async function clearAllCategoryImages() {
+    saving.value = true;
+    clearError();
+    try {
+      const targets = categories.value.filter(
+        (item) => item.image || item.cloudinaryDeleteToken || item.cloudinaryPublicId
+      );
+
+      await Promise.all(
+        targets.map(async (category) => {
+          if (category.cloudinaryDeleteToken) {
+            await tryDeleteUploadedImage(category.cloudinaryDeleteToken);
+          }
+
+          await updateCategory(category.docId ?? category.id, {
+            ...category,
+            image: "",
+            cloudinaryPublicId: "",
+            cloudinaryDeleteToken: "",
+          });
+        })
+      );
+
+      categories.value = normalizeCategories(
+        categories.value.map((category) => ({
+          ...category,
+          image: "",
+          cloudinaryPublicId: "",
+          cloudinaryDeleteToken: "",
+        }))
+      );
+
+      await publishMenuSnapshot({
+        venue,
+        categories: categories.value,
+        products: products.value,
+      });
+
+      return true;
+    } catch (error) {
+      setLastError(error);
+      return false;
+    } finally {
+      saving.value = false;
+    }
+  }
+
+  async function clearAllProductImages() {
+    saving.value = true;
+    clearError();
+    try {
+      const targets = products.value.filter(
+        (item) => item.image || item.cloudinaryDeleteToken || item.cloudinaryPublicId
+      );
+
+      await Promise.all(
+        targets.map(async (product) => {
+          if (product.cloudinaryDeleteToken) {
+            await tryDeleteUploadedImage(product.cloudinaryDeleteToken);
+          }
+
+          await updateProduct(product.id, {
+            ...product,
+            image: "",
+            cloudinaryPublicId: "",
+            cloudinaryDeleteToken: "",
+          });
+        })
+      );
+
+      products.value = normalizeProducts(
+        products.value.map((product) => ({
+          ...product,
+          image: "",
+          cloudinaryPublicId: "",
+          cloudinaryDeleteToken: "",
+        }))
+      );
+
+      await publishMenuSnapshot({
+        venue,
+        categories: categories.value,
+        products: products.value,
+      });
+
       return true;
     } catch (error) {
       setLastError(error);
@@ -310,5 +404,7 @@ export function useAdminMenu() {
     tryDeleteUploadedImage,
     replaceCatalog,
     publishCurrentMenu,
+    clearAllCategoryImages,
+    clearAllProductImages,
   };
 }

@@ -1,11 +1,11 @@
-<template>
+﻿<template>
   <main class="admin-page">
     <section class="admin-page-header">
       <div>
-        <p class="admin-kicker">Urunler</p>
-        <h2>Urun Yonetimi</h2>
+        <p class="admin-kicker">Ürünler</p>
+        <h2>Ürün Yönetimi</h2>
       </div>
-      <p>Fiyat, aciklama, etiketler, kategori baglantisi ve gorseller bu alandan guncellenir.</p>
+      <p>Fiyat, açıklama, etiketler, kategori bağlantısı ve görseller bu alandan güncellenir.</p>
     </section>
 
     <div v-if="lastError" class="admin-alert admin-alert-warning">
@@ -14,7 +14,7 @@
 
     <section class="admin-toolbar-panel">
       <label class="admin-field">
-        <span>Urun Ara</span>
+        <span>Ürün Ara</span>
         <input
           v-model.trim="searchTerm"
           type="search"
@@ -24,8 +24,8 @@
       <label class="admin-field">
         <span>Kategori Filtresi</span>
         <select v-model="selectedCategoryFilter">
-          <option value="all">Tum Kategoriler</option>
-          <option value="featured">Sadece One Cikanlar</option>
+          <option value="all">Tüm Kategoriler</option>
+          <option value="featured">Sadece Öne Çıkanlar</option>
           <option
             v-for="category in categories"
             :key="`filter-${category.id}`"
@@ -35,15 +35,25 @@
           </option>
         </select>
       </label>
+      <div class="admin-form-actions">
+        <button
+          class="admin-danger-button"
+          type="button"
+          :disabled="saving || !hasAnyProductImage"
+          @click="clearAllImages"
+        >
+          Mevcut Görselleri Temizle
+        </button>
+      </div>
     </section>
 
     <section class="admin-form-card">
       <div class="admin-page-header admin-page-header-compact">
         <div>
-          <p class="admin-kicker">One Cikanlar</p>
-          <h2>Vitrin Secimi</h2>
+          <p class="admin-kicker">Öne Çıkanlar</p>
+          <h2>Vitrin Seçimi</h2>
         </div>
-        <p>Mevcut urunlerden ara, one cikar ve ana sayfadaki vitrine ekle.</p>
+        <p>Mevcut ürünlerden ara, öne çıkar ve ana sayfadaki vitrine ekle.</p>
       </div>
 
       <div class="featured-picker">
@@ -53,7 +63,7 @@
           class="featured-picker-card"
         >
           <div class="featured-picker-media">
-            <img v-if="product.image" :src="product.image" :alt="product.name" />
+            <img v-if="showProductImages && product.image" :src="product.image" :alt="product.name" />
           </div>
           <div class="featured-picker-body">
             <div>
@@ -67,10 +77,10 @@
                 :disabled="saving"
                 @click="toggleFeatured(product)"
               >
-                {{ product.isFeatured ? "One Cikani Kaldir" : "One Cikan Yap" }}
+                {{ product.isFeatured ? "Öne Çıkanı Kaldır" : "Öne Çıkan Yap" }}
               </button>
               <label v-if="product.isFeatured" class="admin-field">
-                <span>Sira</span>
+                <span>Sıra</span>
                 <input
                   :value="product.featuredOrder"
                   type="number"
@@ -95,13 +105,13 @@
     <form class="admin-form-card" @submit.prevent="handleCreate">
       <div class="admin-form-grid">
         <label class="admin-field">
-          <span>Urun Adi</span>
+          <span>Ürün Adı</span>
           <input v-model.trim="draft.name" type="text" />
         </label>
         <label class="admin-field">
           <span>Kategori</span>
           <select v-model="draft.category">
-            <option disabled value="">Sec</option>
+            <option disabled value="">Seç</option>
             <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.name }}</option>
           </select>
         </label>
@@ -110,30 +120,30 @@
           <input v-model.trim="draft.price" type="text" />
         </label>
         <label class="admin-field admin-field-full">
-          <span>Aciklama</span>
+          <span>Açıklama</span>
           <textarea v-model.trim="draft.description" rows="3"></textarea>
         </label>
         <label class="admin-field admin-field-full">
           <span>Etiketler</span>
-          <input v-model.trim="draft.tagsInput" type="text" placeholder="Ozel Harman, En Cok Tercih Edilen" />
+          <input v-model.trim="draft.tagsInput" type="text" placeholder="Özel Harman, En Çok Tercih Edilen" />
         </label>
         <label class="admin-field">
-          <span>One Cikan</span>
+          <span>Öne Çıkan</span>
           <select v-model="draft.isFeatured">
-            <option :value="false">Hayir</option>
+            <option :value="false">Hayır</option>
             <option :value="true">Evet</option>
           </select>
         </label>
         <label class="admin-field">
-          <span>One Cikan Sirasi</span>
+          <span>Öne Çıkan Sırası</span>
           <input v-model.number="draft.featuredOrder" type="number" min="0" />
         </label>
         <label class="admin-field">
-          <span>Gorsel URL</span>
+          <span>Görsel URL</span>
           <input v-model.trim="draft.image" type="url" />
         </label>
         <label class="admin-field">
-          <span>Gorsel Yukle</span>
+          <span>Görsel Yükle</span>
           <input type="file" accept="image/*" @change="openCropper($event, 'draft')" />
         </label>
       </div>
@@ -144,32 +154,32 @@
           type="button"
           @click="clearDraftImage"
         >
-          Gorseli Kaldir
+          Görseli Kaldır
         </button>
-        <button class="admin-primary-button" type="submit" :disabled="saving">Urun Ekle</button>
+        <button class="admin-primary-button" type="submit" :disabled="saving">Ürün Ekle</button>
       </div>
     </form>
 
     <section class="admin-list">
       <article v-for="product in filteredProducts" :key="product.id" class="admin-list-card">
         <div class="admin-list-media">
-          <img v-if="product.image" :src="product.image" :alt="product.name" />
+          <img v-if="showProductImages && product.image" :src="product.image" :alt="product.name" />
         </div>
         <div class="admin-list-body">
           <div class="admin-list-head">
             <div>
-              <p v-if="product.isFeatured" class="admin-chip">ONE CIKAN - {{ product.featuredOrder || "-" }}</p>
+              <p v-if="product.isFeatured" class="admin-chip">ÖNE ÇIKAN - {{ product.featuredOrder || "-" }}</p>
               <h3>{{ product.name }}</h3>
               <p class="admin-price">{{ product.price }}</p>
             </div>
             <div class="admin-order-controls">
-              <button class="admin-icon-button" type="button" @click="moveProduct(product.id, -1)">Yukari</button>
-              <button class="admin-icon-button" type="button" @click="moveProduct(product.id, 1)">Asagi</button>
+              <button class="admin-icon-button" type="button" @click="moveProduct(product.id, -1)">Yukarı</button>
+              <button class="admin-icon-button" type="button" @click="moveProduct(product.id, 1)">Aşağı</button>
             </div>
           </div>
           <div class="admin-form-grid">
             <label class="admin-field">
-              <span>Baslik</span>
+              <span>Başlık</span>
               <input :value="product.name" @input="patch(product.id, 'name', $event.target.value)" />
             </label>
             <label class="admin-field">
@@ -183,7 +193,7 @@
               <input :value="product.price" @input="patch(product.id, 'price', $event.target.value)" />
             </label>
             <label class="admin-field admin-field-full">
-              <span>Aciklama</span>
+              <span>Açıklama</span>
               <textarea :value="product.description" rows="3" @input="patch(product.id, 'description', $event.target.value)"></textarea>
             </label>
             <label class="admin-field admin-field-full">
@@ -191,28 +201,28 @@
               <input :value="(product.tags || []).join(', ')" @input="patch(product.id, 'tags', $event.target.value.split(',').map((item) => item.trim()).filter(Boolean))" />
             </label>
             <label class="admin-field">
-              <span>One Cikan</span>
+              <span>Öne Çıkan</span>
               <select :value="product.isFeatured" @change="patch(product.id, 'isFeatured', $event.target.value === 'true')">
-                <option :value="false">Hayir</option>
+                <option :value="false">Hayır</option>
                 <option :value="true">Evet</option>
               </select>
             </label>
             <label class="admin-field">
-              <span>One Cikan Sirasi</span>
+              <span>Öne Çıkan Sırası</span>
               <input :value="product.featuredOrder" type="number" min="0" @input="patch(product.id, 'featuredOrder', toNumber($event.target.value, 0))" />
             </label>
             <label class="admin-field admin-field-full">
-              <span>Gorsel URL</span>
+              <span>Görsel URL</span>
               <input :value="product.image" @input="patch(product.id, 'image', $event.target.value)" />
             </label>
             <label class="admin-field admin-field-full">
-              <span>Gorsel Degistir</span>
+              <span>Görsel Değiştir</span>
               <input type="file" accept="image/*" @change="openCropper($event, 'existing', product.id)" />
             </label>
           </div>
           <div class="admin-form-actions">
             <button class="admin-ghost-button" type="button" :disabled="saving" @click="clearExistingImage(product)">
-              Gorseli Kaldir
+              Görseli Kaldır
             </button>
             <button class="admin-primary-button" type="button" :disabled="saving" @click="save(product)">Kaydet</button>
             <button class="admin-danger-button" type="button" :disabled="saving" @click="removeProductRecord(product.id)">Sil</button>
@@ -223,10 +233,11 @@
 
     <ImageCropperModal
       :open="cropper.open"
+      :busy="cropper.uploading"
       :src="cropper.src"
       :file-name="cropper.fileName"
       :aspect-ratio="1.6"
-      title="Urun gorselini duzenle"
+      title="Ürün görselini düzenle"
       @close="closeCropper"
       @confirm="handleCropConfirm"
     />
@@ -250,6 +261,7 @@ const {
   moveProduct,
   uploadImage,
   tryDeleteUploadedImage,
+  clearAllProductImages,
   lastError,
 } = useAdminMenu();
 
@@ -273,6 +285,7 @@ const cropper = reactive({
   fileName: "product.jpg",
   target: "draft",
   targetId: "",
+  uploading: false,
 });
 
 const searchTerm = ref("");
@@ -304,6 +317,14 @@ const filteredProducts = computed(() => {
       .some((value) => String(value).toLowerCase().includes(query))
   );
 });
+
+const showProductImages = computed(() =>
+  Boolean(searchTerm.value.trim() || selectedCategoryFilter.value !== "all")
+);
+
+const hasAnyProductImage = computed(() =>
+  products.value.some((product) => product.image || product.cloudinaryPublicId || product.cloudinaryDeleteToken)
+);
 
 function patch(id, field, value) {
   const target = products.value.find((item) => item.id === id);
@@ -362,37 +383,44 @@ function openCropper(event, target, targetId = "") {
 }
 
 function closeCropper() {
+  if (cropper.uploading) return;
   cropper.open = false;
   cropper.src = "";
   cropper.fileName = "product.jpg";
   cropper.target = "draft";
   cropper.targetId = "";
+  cropper.uploading = false;
 }
 
 async function handleCropConfirm(file) {
-  const uploaded = await uploadImage(file, "mehlika/products");
-  if (!uploaded) {
-    closeCropper();
-    return;
-  }
+  if (cropper.uploading) return;
+  cropper.uploading = true;
 
-  if (cropper.target === "draft") {
-    draft.image = uploaded.url;
-    draft.cloudinaryPublicId = uploaded.publicId || "";
-    draft.cloudinaryDeleteToken = uploaded.deleteToken || "";
-  } else {
-    const target = products.value.find((item) => item.id === cropper.targetId);
-    if (target) {
-      if (target.cloudinaryDeleteToken) {
-        await tryDeleteUploadedImage(target.cloudinaryDeleteToken);
-      }
-      target.image = uploaded.url;
-      target.cloudinaryPublicId = uploaded.publicId || "";
-      target.cloudinaryDeleteToken = uploaded.deleteToken || "";
+  try {
+    const uploaded = await uploadImage(file, "mehlika/products");
+    if (!uploaded) {
+      return;
     }
-  }
 
-  closeCropper();
+    if (cropper.target === "draft") {
+      draft.image = uploaded.url;
+      draft.cloudinaryPublicId = uploaded.publicId || "";
+      draft.cloudinaryDeleteToken = uploaded.deleteToken || "";
+    } else {
+      const target = products.value.find((item) => item.id === cropper.targetId);
+      if (target) {
+        if (target.cloudinaryDeleteToken) {
+          await tryDeleteUploadedImage(target.cloudinaryDeleteToken);
+        }
+        target.image = uploaded.url;
+        target.cloudinaryPublicId = uploaded.publicId || "";
+        target.cloudinaryDeleteToken = uploaded.deleteToken || "";
+      }
+    }
+  } finally {
+    cropper.uploading = false;
+    closeCropper();
+  }
 }
 
 async function save(product) {
@@ -412,5 +440,14 @@ async function clearExistingImage(product) {
   product.image = "";
   product.cloudinaryPublicId = "";
   product.cloudinaryDeleteToken = "";
+}
+
+async function clearAllImages() {
+  const confirmed = window.confirm(
+    "Tüm ürün görselleri temizlenecek ve public menüden kaldırılacak. Devam edilsin mi?"
+  );
+  if (!confirmed) return;
+
+  await clearAllProductImages();
 }
 </script>
